@@ -1,0 +1,9 @@
+{
+  "name": "ibugbe-vcf-secure",
+  "version": "1.0.0",
+  "dependencies": {
+    "mongodb": "^5.0.0",
+    "jsonwebtoken": "^9.0.0",
+    "bcryptjs": "^2.4.3"
+  }
+}

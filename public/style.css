@@ -1,0 +1,16 @@
+body {
+  margin: 0;
+  font-family: Arial;
+  background: radial-gradient(circle, #00f0ff, #6a5cff, #ff00ff);
+  color: white;
+}
+
+.container {
+  padding: 20px;
+}
+
+.logo {
+  width: 120px;
+  border-radius: 50%;
+  box-shadow: 0 0 30px cyan;
+}
