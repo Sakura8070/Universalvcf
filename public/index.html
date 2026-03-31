@@ -1,22 +1,285 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ibugbe Alaafia VCF</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+  margin:0;
+  font-family:'Orbitron', sans-serif;
+  background: radial-gradient(circle at center, #050816, #000);
+  color:#9ffcff;
+}
+
+.container {
+  max-width:900px;
+  margin:auto;
+  padding:20px;
+}
+
+.header {
+  display:flex;
+  align-items:center;
+  gap:15px;
+}
+
+.logo {
+  width:70px;
+  border-radius:50%;
+  box-shadow:0 0 20px #00eaff;
+  animation:pulse 2s infinite alternate;
+}
+
+@keyframes pulse {
+  from { box-shadow:0 0 10px #00eaff; }
+  to { box-shadow:0 0 30px #ff00ff; }
+}
+
+.title {
+  font-size:30px;
+  background:linear-gradient(90deg,#00eaff,#6a5cff,#ff00ff);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+.card {
+  background: rgba(0,0,40,0.5);
+  border:1px solid #00eaff33;
+  border-radius:15px;
+  padding:20px;
+  margin-bottom:20px;
+  box-shadow:0 0 25px #00eaff22;
+  transition:0.3s;
+}
+
+.card:hover {
+  transform:translateY(-5px);
+}
+
+input, select {
+  width:100%;
+  padding:12px;
+  margin:8px 0;
+  border-radius:10px;
+  border:none;
+  background:#020a1f;
+  color:#9ffcff;
+}
+
+button {
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  background:linear-gradient(90deg,#00eaff,#6a5cff,#ff00ff);
+  color:#000;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+button:disabled {
+  opacity:0.4;
+}
+
+.progress {
+  height:10px;
+  background:#111;
+  border-radius:10px;
+}
+
+.progress-bar {
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#00eaff,#ff00ff);
+  transition:1s;
+}
+
+.stats {
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+}
+
+.dashboard-item {
+  padding:8px;
+  border-bottom:1px solid #00eaff22;
+}
+
+.lock {
+  text-align:center;
+  color:#ff4df0;
+}
+
+.flag-select {
+  display:flex;
+  gap:10px;
+}
+
+.flag-select select {
+  width:40%;
+}
+
+.flag-select input {
+  width:60%;
+}
+
+.floating {
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.floating a {
+  background:#00eaff;
+  padding:12px;
+  border-radius:50%;
+  color:black;
+  text-decoration:none;
+}
+</style>
 </head>
+
 <body>
 
 <div class="container">
-<img src="lion.png" class="logo">
-<h1>Ibugbe Alaafia VCF</h1>
 
-<input id="name" placeholder="Name">
-<input id="email" placeholder="Email">
-<input id="country" placeholder="Country">
-<input id="phone" placeholder="Phone">
-
-<button onclick="save()">Save Contact</button>
+<div class="header">
+<img src="https://files.catbox.moe/5wsk7t.jpg" class="logo">
+<div class="title">Ibugbe Alaafia VCF</div>
 </div>
 
-<script src="script.js"></script>
+<div class="slogan">⚡ Build Power. Code the Future. Unlock Digital Domination.</div>
+
+<!-- PROGRESS -->
+<div class="card">
+<h3>📊 Progress</h3>
+<div class="progress"><div class="progress-bar" id="bar"></div></div>
+<div class="stats">
+<span id="saved">0 / 500</span>
+<span id="remaining">500 remaining</span>
+</div>
+</div>
+
+<!-- FORM -->
+<div class="card">
+<h3>📥 Save Contact</h3>
+
+<input id="name" placeholder="Full Name">
+<input id="email" placeholder="Email">
+
+<div class="flag-select">
+<select id="country"></select>
+<input id="phone" placeholder="Phone Number">
+</div>
+
+<button onclick="save()">💾 Save Contact</button>
+</div>
+
+<!-- DOWNLOAD -->
+<div class="card lock" id="lock">
+🔒 Downloads unlock at 500 contacts
+</div>
+
+<div class="card">
+<button id="downloadBtn" onclick="downloadVCF()" disabled>📥 Download VCF</button>
+</div>
+
+<!-- LAST ACTIVITIES -->
+<div class="card">
+<h3>📌 Last Activity</h3>
+<div id="latest"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="card">
+<h3>📈 Dashboard</h3>
+<p id="dash"></p>
+</div>
+
+</div>
+
+<!-- FLOAT BUTTONS -->
+<div class="floating">
+<a href="https://wa.me/TON_NUMERO">💬</a>
+<a href="https://instagram.com/TON_COMPTE">📸</a>
+<a href="https://t.me/TON_CHANNEL">📢</a>
+</div>
+
+<script>
+// LOAD COUNTRIES
+fetch('https://restcountries.com/v3.1/all')
+.then(res=>res.json())
+.then(data=>{
+  const select=document.getElementById('country');
+  data.forEach(c=>{
+    const code=c.idd?.root+(c.idd?.suffixes?.[0]||'');
+    if(!code) return;
+    const opt=document.createElement('option');
+    opt.textContent=`${c.flag} +${code}`;
+    select.appendChild(opt);
+  });
+});
+
+// LOAD DATA
+async function load(){
+  const res = await fetch('/api/stats');
+  const data = await res.json();
+
+  let total = data.total;
+  let remaining = 500-total;
+  let percent = Math.min((total/500)*100,100);
+
+  bar.style.width = percent+'%';
+  saved.innerText = total + '/500';
+  remainingText = remaining + ' remaining';
+  document.getElementById('remaining').innerText = remainingText;
+
+  dash.innerText = `Saved: ${total} | Remaining: ${remaining} | Progress: ${percent.toFixed(1)}%`;
+
+  // unlock
+  if(total >= 500){
+    downloadBtn.disabled = false;
+    lock.innerText = '✅ Downloads Unlocked';
+  }
+
+  // latest
+  latest.innerHTML='';
+  data.latest.forEach(l=>{
+    let d=document.createElement('div');
+    d.className='dashboard-item';
+    d.innerText=l.phone;
+    latest.appendChild(d);
+  });
+}
+
+// SAVE
+async function save(){
+  await fetch('/api/contact',{
+    method:'POST',
+    body:JSON.stringify({
+      name:name.value,
+      email:email.value,
+      country:country.value,
+      phone:phone.value
+    })
+  });
+  load();
+}
+
+// DOWNLOAD
+function downloadVCF(){
+  window.location='/api/vcf';
+}
+
+load();
+</script>
+
 </body>
 </html>
