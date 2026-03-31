@@ -213,19 +213,27 @@ button:disabled {
 </div>
 
 <script>
+
 // LOAD COUNTRIES
 fetch('https://restcountries.com/v3.1/all')
-.then(res=>res.json())
-.then(data=>{
-  const select=document.getElementById('country');
-  data.forEach(c=>{
-    const code=c.idd?.root+(c.idd?.suffixes?.[0]||'');
-    if(!code) return;
-    const opt=document.createElement('option');
-    opt.textContent=`${c.flag} +${code}`;
+.then(res => res.json())
+.then(data => {
+  const select = document.getElementById('country');
+
+  data.forEach(c => {
+    if (!c.idd || !c.idd.root) return;
+
+    const code = c.idd.root + (c.idd.suffixes ? c.idd.suffixes[0] : '');
+    const name = c.name.common;
+
+    const opt = document.createElement('option');
+    opt.value = code;
+    opt.textContent = `${c.flag} ${name} (+${code})`;
+
     select.appendChild(opt);
   });
 });
+
 
 // LOAD DATA
 async function load(){
@@ -238,18 +246,15 @@ async function load(){
 
   bar.style.width = percent+'%';
   saved.innerText = total + '/500';
-  remainingText = remaining + ' remaining';
-  document.getElementById('remaining').innerText = remainingText;
+  document.getElementById('remaining').innerText = remaining + ' remaining';
 
   dash.innerText = `Saved: ${total} | Remaining: ${remaining} | Progress: ${percent.toFixed(1)}%`;
 
-  // unlock
   if(total >= 500){
     downloadBtn.disabled = false;
     lock.innerText = '✅ Downloads Unlocked';
   }
 
-  // latest
   latest.innerHTML='';
   data.latest.forEach(l=>{
     let d=document.createElement('div');
@@ -259,19 +264,32 @@ async function load(){
   });
 }
 
-// SAVE
+
+// SAVE CONTACT (FIXED)
 async function save(){
+  const countryCode = document.getElementById('country').value;
+  const phoneNumber = document.getElementById('phone').value;
+
+  if(!phoneNumber){
+    alert("Enter phone number");
+    return;
+  }
+
+  const fullPhone = `+${countryCode}${phoneNumber}`;
+
   await fetch('/api/contact',{
     method:'POST',
     body:JSON.stringify({
       name:name.value,
       email:email.value,
-      country:country.value,
-      phone:phone.value
+      country:countryCode,
+      phone:fullPhone
     })
   });
+
   load();
 }
+
 
 // DOWNLOAD
 function downloadVCF(){
@@ -279,7 +297,7 @@ function downloadVCF(){
 }
 
 load();
-</script>
 
+</script>
 </body>
 </html>
