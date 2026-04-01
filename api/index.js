@@ -103,25 +103,29 @@ module.exports = async (req, res) => {
   try {
     const total = await contacts.countDocuments();
 
-    const latest = await contacts
+    const latestRaw = await contacts
       .find({})
       .sort({ createdAt: -1 })
       .limit(5)
       .toArray();
 
-    // 🔥 MASQUER NUMÉROS
-    const masked = latest.map(c => ({
-      phone: c.phone ? c.phone.slice(0, 5) + "******" : "hidden"
+    // 🔒 Nettoyage + sécurité
+    const latest = latestRaw.map(c => ({
+      phone: c.phone
+        ? c.phone.slice(0, 5) + "******"
+        : "hidden"
     }));
 
-    return res.json({ total, latest: masked });
+    return res.json({
+      total,
+      latest
+    });
 
   } catch (err) {
     console.error("STATS ERROR:", err);
     return res.status(500).json({ error: "Stats failed" });
   }
-    }
-
+}
     // =========================
     // ADMIN DASHBOARD
     // =========================
