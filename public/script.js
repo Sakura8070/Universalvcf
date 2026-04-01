@@ -1,3 +1,6 @@
+// ========================
+// SAVE CONTACT
+// ========================
 async function save() {
   const nameVal = document.getElementById('name').value;
   const emailVal = document.getElementById('email').value;
@@ -31,15 +34,16 @@ async function save() {
     });
 
     const data = await res.json();
-
-    console.log("RESPONSE:", data);
+    console.log("SAVE RESPONSE:", data);
 
     if (res.ok) {
       alert("✅ Contact saved !");
-      
-      // 🔥 recharge dashboard
-      if (typeof load === "function") {
-        load();
+
+      // 🔥 reload dashboard SANS casser le save
+      try {
+        await load();
+      } catch (err) {
+        console.warn("Load failed (non critique):", err);
       }
 
     } else {
@@ -47,46 +51,56 @@ async function save() {
     }
 
   } catch (err) {
-    console.error("FETCH ERROR:", err);
+    console.error("SAVE ERROR:", err);
     alert("🚨 Server error");
   }
 }
 
+
+// ========================
+// LOAD DASHBOARD
+// ========================
 async function load(){
   try {
     const res = await fetch('/api/stats');
 
     if(!res.ok){
-      console.error("Stats API failed:", res.status);
-      return;
+      throw new Error("Stats API failed");
     }
 
     const data = await res.json();
-
     console.log("STATS:", data);
 
     let total = data.total || 0;
     let remaining = 500 - total;
     let percent = Math.min((total / 500) * 100, 100);
 
-    // Progress bar
+    // ========================
+    // PROGRESS BAR
+    // ========================
     const bar = document.getElementById('bar');
     if(bar) bar.style.width = percent + "%";
 
-    // Stats text
+    // ========================
+    // TEXT STATS
+    // ========================
     const saved = document.getElementById('saved');
     const remainingEl = document.getElementById('remaining');
 
     if(saved) saved.innerText = total + " / 500";
     if(remainingEl) remainingEl.innerText = remaining + " remaining";
 
-    // Dashboard text
+    // ========================
+    // DASHBOARD TEXT
+    // ========================
     const dash = document.getElementById('dash');
     if(dash){
       dash.innerText = `Saved: ${total} | Remaining: ${remaining} | Progress: ${percent.toFixed(1)}%`;
     }
 
-    // Latest activity
+    // ========================
+    // LAST ACTIVITIES
+    // ========================
     const latestDiv = document.getElementById('latest');
     if(latestDiv){
       latestDiv.innerHTML = "";
@@ -104,4 +118,10 @@ async function load(){
   }
 }
 
-load();
+
+// ========================
+// AUTO LOAD ON START
+// ========================
+document.addEventListener("DOMContentLoaded", () => {
+  load();
+});
