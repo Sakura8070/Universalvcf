@@ -216,7 +216,7 @@ button:disabled {
 
 <script>
 
-// 🌍 LISTE LOCALE MULTI-CONTINENTS
+// 🌍 LISTE ÉTENDUE (AFRIQUE + ASIE + EUROPE + MONDE)
 const countries = [
   // AFRICA
   {name:"Nigeria", code:"234", flag:"🇳🇬"},
@@ -231,6 +231,10 @@ const countries = [
   {name:"Morocco", code:"212", flag:"🇲🇦"},
   {name:"Algeria", code:"213", flag:"🇩🇿"},
   {name:"Egypt", code:"20", flag:"🇪🇬"},
+  {name:"Ethiopia", code:"251", flag:"🇪🇹"},
+  {name:"Uganda", code:"256", flag:"🇺🇬"},
+  {name:"Tanzania", code:"255", flag:"🇹🇿"},
+  {name:"Angola", code:"244", flag:"🇦🇴"},
 
   // EUROPE
   {name:"France", code:"33", flag:"🇫🇷"},
@@ -238,10 +242,12 @@ const countries = [
   {name:"United Kingdom", code:"44", flag:"🇬🇧"},
   {name:"Spain", code:"34", flag:"🇪🇸"},
   {name:"Italy", code:"39", flag:"🇮🇹"},
+  {name:"Portugal", code:"351", flag:"🇵🇹"},
   {name:"Netherlands", code:"31", flag:"🇳🇱"},
   {name:"Belgium", code:"32", flag:"🇧🇪"},
   {name:"Switzerland", code:"41", flag:"🇨🇭"},
   {name:"Russia", code:"7", flag:"🇷🇺"},
+  {name:"Poland", code:"48", flag:"🇵🇱"},
 
   // ASIA
   {name:"India", code:"91", flag:"🇮🇳"},
@@ -252,6 +258,8 @@ const countries = [
   {name:"Thailand", code:"66", flag:"🇹🇭"},
   {name:"Philippines", code:"63", flag:"🇵🇭"},
   {name:"Pakistan", code:"92", flag:"🇵🇰"},
+  {name:"Bangladesh", code:"880", flag:"🇧🇩"},
+  {name:"Vietnam", code:"84", flag:"🇻🇳"},
 
   // MIDDLE EAST
   {name:"UAE", code:"971", flag:"🇦🇪"},
@@ -259,18 +267,18 @@ const countries = [
   {name:"Qatar", code:"974", flag:"🇶🇦"},
   {name:"Israel", code:"972", flag:"🇮🇱"},
   {name:"Turkey", code:"90", flag:"🇹🇷"},
+  {name:"Iran", code:"98", flag:"🇮🇷"},
 
-  // NORTH AMERICA
+  // AMERICA
   {name:"USA", code:"1", flag:"🇺🇸"},
   {name:"Canada", code:"1", flag:"🇨🇦"},
   {name:"Mexico", code:"52", flag:"🇲🇽"},
-
-  // LATAM
   {name:"Brazil", code:"55", flag:"🇧🇷"},
   {name:"Argentina", code:"54", flag:"🇦🇷"},
   {name:"Colombia", code:"57", flag:"🇨🇴"},
   {name:"Chile", code:"56", flag:"🇨🇱"},
   {name:"Peru", code:"51", flag:"🇵🇪"},
+  {name:"Venezuela", code:"58", flag:"🇻🇪"},
 
   // OCEANIA
   {name:"Australia", code:"61", flag:"🇦🇺"},
@@ -282,7 +290,6 @@ const countries = [
 const select = document.getElementById('country');
 select.innerHTML = `<option value="">🌍 Select Country Code</option>`;
 
-// tri alphabétique
 countries.sort((a,b)=>a.name.localeCompare(b.name));
 
 countries.forEach(c=>{
@@ -292,10 +299,8 @@ countries.forEach(c=>{
   select.appendChild(opt);
 });
 
-</script>
 
-
-// SAVE CONTACT (FIXED)
+// SAVE CONTACT
 async function save(){
   const countryCode = document.getElementById('country').value;
   const phoneNumber = document.getElementById('phone').value;
@@ -305,15 +310,16 @@ async function save(){
     return;
   }
 
-if(!countryCode){
-  alert("Select country code");
-  return;
-}
-  
+  if(!countryCode){
+    alert("Select country code");
+    return;
+  }
+
   const fullPhone = `+${countryCode}${phoneNumber}`;
 
   await fetch('/api/contact',{
     method:'POST',
+    headers: { "Content-Type": "application/json" },
     body:JSON.stringify({
       name:name.value,
       email:email.value,
@@ -331,10 +337,8 @@ function downloadVCF(){
   window.location='/api/vcf';
 }
 
-load();
-
 </script>
-
+  
 </div><div style="text-align:center; font-size:12px; margin-top:20px; color:#6cf0ff;">
 Designed by Ken~v Sama & Sakura
 </div></div>
