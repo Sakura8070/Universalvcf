@@ -100,15 +100,26 @@ module.exports = async (req, res) => {
     // STATS
     // =========================
     if (req.url.startsWith('/api/stats')) {
-      const total = await contacts.countDocuments();
+  try {
+    const total = await contacts.countDocuments();
 
-      const latest = await contacts
-        .find()
-        .sort({ createdAt: -1 })
-        .limit(5)
-        .toArray();
+    const latest = await contacts
+      .find({})
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .toArray();
 
-      return res.json({ total, latest });
+    // 🔥 MASQUER NUMÉROS
+    const masked = latest.map(c => ({
+      phone: c.phone ? c.phone.slice(0, 5) + "******" : "hidden"
+    }));
+
+    return res.json({ total, latest: masked });
+
+  } catch (err) {
+    console.error("STATS ERROR:", err);
+    return res.status(500).json({ error: "Stats failed" });
+  }
     }
 
     // =========================
