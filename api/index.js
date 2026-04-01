@@ -25,82 +25,136 @@ function auth(req) {
 }
 
 module.exports = async (req, res) => {
-  const database = await db();
-  const contacts = database.collection("contacts");
-  const admins = database.collection("admins");
+  try {
+    const database = await db();
+    const contacts = database.collection("contacts");
+    const admins = database.collection("admins");
 
-  // Setup admin (run once)
-  if (req.url === '/api/setup') {
-    const hash = await bcrypt.hash("admin123", 10);
-    await admins.insertOne({ username: "admin", password: hash });
-    return res.json({ done: true });
-  }
+    // =========================
+    // SETUP ADMIN
+    // =========================
+    if (req.url.startsWith('/api/setup')) {
+      const exists = await admins.findOne({ username: "admin" });
 
-  // Login
-  if (req.url === '/api/login') {
-    let body = '';
-    req.on('data', c => body += c);
-    req.on('end', async () => {
-      const { username, password } = JSON.parse(body);
+      if (!exists) {
+        const hash = await bcrypt.hash("admin123", 10);
+        await admins.insertOne({ username: "admin", password: hash });
+      }
+
+      return res.json({ done: true });
+    }
+
+    // =========================
+    // LOGIN
+    // =========================
+    if (req.url.startsWith('/api/login')) {
+      let body = '';
+
+      if (typeof req.body === "object") {
+        body = req.body;
+      } else {
+        await new Promise(resolve => {
+          req.on('data', c => body += c);
+          req.on('end', resolve);
+        });
+        body = JSON.parse(body || "{}");
+      }
+
+      const { username, password } = body;
       const user = await admins.findOne({ username });
 
       if (user && await bcrypt.compare(password, user.password)) {
         const token = jwt.sign({ username }, SECRET, { expiresIn: '2h' });
         return res.json({ token });
       }
-      res.status(401).json({ error: "Unauthorized" });
-    });
-    return;
+
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    // =========================
+    // SAVE CONTACT
+    // =========================
+    if (req.method === 'POST' && req.url.startsWith('/api/contact')) {
+
+      let body = '';
+
+      if (typeof req.body === "object") {
+        body = req.body;
+      } else {
+        await new Promise(resolve => {
+          req.on('data', c => body += c);
+          req.on('end', resolve);
+        });
+        body = JSON.parse(body || "{}");
+      }
+
+      await contacts.insertOne({
+        ...body,
+        createdAt: new Date()
+      });
+
+      return res.json({ success: true });
+    }
+
+    // =========================
+    // STATS
+    // =========================
+    if (req.url.startsWith('/api/stats')) {
+      const total = await contacts.countDocuments();
+
+      const latest = await contacts
+        .find()
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .toArray();
+
+      return res.json({ total, latest });
+    }
+
+    // =========================
+    // ADMIN DASHBOARD
+    // =========================
+    if (req.url.startsWith('/api/admin')) {
+      const user = auth(req);
+      if (!user) return res.status(403).json({ error: "Forbidden" });
+
+      const total = await contacts.countDocuments();
+
+      const countries = await contacts.aggregate([
+        { $group: { _id: "$country", count: { $sum: 1 } } }
+      ]).toArray();
+
+      return res.json({ total, countries });
+    }
+
+    // =========================
+    // VCF DOWNLOAD
+    // =========================
+    if (req.url.startsWith('/api/vcf')) {
+      const user = auth(req);
+      if (!user) return res.status(403).json({ error: "Forbidden" });
+
+      const all = await contacts.find().toArray();
+
+      let vcf = '';
+
+      all.forEach(c => {
+        vcf += `BEGIN:VCARD\nVERSION:3.0\nFN:${c.name || ''}\nTEL:${c.phone || ''}\nEMAIL:${c.email || ''}\nEND:VCARD\n`;
+      });
+
+      res.setHeader('Content-Type', 'text/vcard');
+      res.setHeader('Content-Disposition', 'attachment; filename=contacts.vcf');
+
+      return res.send(vcf);
+    }
+
+    // =========================
+    // DEFAULT
+    // =========================
+    res.status(200).json({ message: "API OK" });
+
+  } catch (err) {
+    console.error("SERVER ERROR:", err);
+    res.status(500).json({ error: "Server error" });
   }
-
-  // Save contact
-  if (req.method === 'POST' && req.url === '/api/contact') {
-    let body = '';
-    req.on('data', c => body += c);
-    req.on('end', async () => {
-      const data = JSON.parse(body);
-      await contacts.insertOne(data);
-      res.json({ success: true });
-    });
-    return;
-  }
-
-  // Stats
-  if (req.url === '/api/stats') {
-    const total = await contacts.countDocuments();
-    const latest = await contacts.find().sort({ _id: -1 }).limit(5).toArray();
-    return res.json({ total, latest });
-  }
-
-  // Admin dashboard
-  if (req.url === '/api/admin') {
-    const user = auth(req);
-    if (!user) return res.status(403).end();
-
-    const total = await contacts.countDocuments();
-    const countries = await contacts.aggregate([
-      { $group: { _id: "$country", count: { $sum: 1 } } }
-    ]).toArray();
-
-    return res.json({ total, countries });
-  }
-
-  // VCF download
-  if (req.url === '/api/vcf') {
-    const user = auth(req);
-    if (!user) return res.status(403).end();
-
-    const all = await contacts.find().toArray();
-    let vcf = '';
-
-    all.forEach(c => {
-      vcf += `BEGIN:VCARD\nFN:${c.name}\nTEL:${c.phone}\nEND:VCARD\n`;
-    });
-
-    res.setHeader('Content-Disposition', 'attachment; filename=contacts.vcf');
-    res.send(vcf);
-    return;
-  }
-
-  res.end("API OK");
 };
