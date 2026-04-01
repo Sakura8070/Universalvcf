@@ -175,7 +175,9 @@ button:disabled {
 <input id="email" placeholder="Email">
 
 <div class="flag-select">
-<select id="country"></select>
+<select id="country">
+  <option value="">🌍 Select Country Code</option>
+</select>
 <input id="phone" placeholder="Phone Number">
 </div>
 
@@ -220,15 +222,21 @@ fetch('https://restcountries.com/v3.1/all')
 .then(data => {
   const select = document.getElementById('country');
 
+  // ⚡ reset propre (garde le placeholder)
+  select.innerHTML = `<option value="">🌍 Select Country Code</option>`;
+
+  // 🔥 tri alphabétique (pro)
+  data.sort((a,b)=>a.name.common.localeCompare(b.name.common));
+
   data.forEach(c => {
     if (!c.idd || !c.idd.root) return;
 
     const code = c.idd.root + (c.idd.suffixes ? c.idd.suffixes[0] : '');
-    const name = c.name.common;
+    if (!code) return;
 
     const opt = document.createElement('option');
     opt.value = code;
-    opt.textContent = `${c.flag} ${name} (+${code})`;
+    opt.textContent = `${c.flag} ${c.name.common} (+${code})`;
 
     select.appendChild(opt);
   });
@@ -275,6 +283,11 @@ async function save(){
     return;
   }
 
+if(!countryCode){
+  alert("Select country code");
+  return;
+}
+  
   const fullPhone = `+${countryCode}${phoneNumber}`;
 
   await fetch('/api/contact',{
