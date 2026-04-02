@@ -172,7 +172,153 @@ button {
 </div>
 
 <!-- 🔥 SCRIPT EXTERNE UNIQUEMENT -->
-<script src="/script.js"></script>
+<script>
+
+// ========================
+// COUNTRIES (inchangé)
+// ========================
+const countries = [
+  {name:"Nigeria", code:"234", flag:"🇳🇬"},
+  {name:"Benin", code:"229", flag:"🇧🇯"},
+  {name:"Togo", code:"228", flag:"🇹🇬"},
+  {name:"Ghana", code:"233", flag:"🇬🇭"},
+  {name:"Cameroon", code:"237", flag:"🇨🇲"},
+  {name:"South Africa", code:"27", flag:"🇿🇦"},
+  {name:"France", code:"33", flag:"🇫🇷"},
+  {name:"USA", code:"1", flag:"🇺🇸"},
+  {name:"India", code:"91", flag:"🇮🇳"},
+  {name:"Brazil", code:"55", flag:"🇧🇷"},
+  {name:"Japan", code:"81", flag:"🇯🇵"}
+];
+
+// ========================
+// LOAD COUNTRIES
+// ========================
+const select = document.getElementById('country');
+
+countries.sort((a,b)=>a.name.localeCompare(b.name));
+
+countries.forEach(c=>{
+  const opt = document.createElement('option');
+  opt.value = c.code;
+  opt.textContent = `${c.flag} ${c.name} (+${c.code})`;
+  select.appendChild(opt);
+});
+
+
+// ========================
+// SAVE CONTACT (FIXED)
+// ========================
+async function save(){
+  const countryCode = document.getElementById('country').value;
+  const phoneNumber = document.getElementById('phone').value;
+
+  if(!phoneNumber){
+    alert("Enter phone number");
+    return;
+  }
+
+  if(!countryCode){
+    alert("Select country code");
+    return;
+  }
+
+  const fullPhone = `+${countryCode}${phoneNumber}`;
+
+  try {
+    const res = await fetch('/api/contact',{
+      method:'POST',
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: name.value,
+        email: email.value,
+        country: countryCode,
+        phone: fullPhone
+      })
+    });
+
+    const data = await res.json();
+    console.log("SAVE:", data);
+
+    if(res.ok){
+      alert("✅ Contact saved !");
+
+      // 🔥 IMPORTANT: load sécurisé
+      try {
+        await load();
+      } catch(e){
+        console.warn("load error:", e);
+      }
+
+    } else {
+      alert("❌ Error saving contact");
+    }
+
+  } catch(err){
+    console.error("FETCH ERROR:", err);
+    alert("🚨 Server error");
+  }
+}
+
+
+// ========================
+// LOAD DASHBOARD (AJOUT)
+// ========================
+async function load(){
+  try {
+    const res = await fetch('/api/stats');
+
+    if(!res.ok) throw new Error("stats failed");
+
+    const data = await res.json();
+    console.log("STATS:", data);
+
+    let total = data.total || 0;
+    let remaining = 500 - total;
+    let percent = Math.min((total/500)*100,100);
+
+    // progress
+    document.getElementById('bar').style.width = percent + "%";
+
+    // stats text
+    document.getElementById('saved').innerText = total + " / 500";
+    document.getElementById('remaining').innerText = remaining + " remaining";
+
+    // dashboard
+    document.getElementById('dash').innerText =
+      `Saved: ${total} | Remaining: ${remaining} | ${percent.toFixed(1)}%`;
+
+    // latest
+    const latestDiv = document.getElementById('latest');
+    latestDiv.innerHTML = "";
+
+    (data.latest || []).forEach(l=>{
+      let d = document.createElement('div');
+      d.className = 'dashboard-item';
+      d.innerText = l.phone || "hidden";
+      latestDiv.appendChild(d);
+    });
+
+  } catch(err){
+    console.error("LOAD ERROR:", err);
+  }
+}
+
+
+// ========================
+// DOWNLOAD
+// ========================
+function downloadVCF(){
+  window.location='/api/vcf';
+}
+
+
+// ========================
+// AUTO LOAD
+// ========================
+load();
+
+</script>
 
 </body>
 </html>
