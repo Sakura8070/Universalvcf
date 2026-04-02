@@ -118,6 +118,19 @@ async function load(){
   }
 }
 
+// 🔒 LOCK DOWNLOAD SYSTEM
+const downloadBtn = document.getElementById('downloadBtn');
+const lock = document.getElementById('lock');
+
+if (downloadBtn) {
+  if(total >= 500){
+    downloadBtn.disabled = false;
+    if(lock) lock.innerText = "✅ Downloads unlocked";
+  } else {
+    downloadBtn.disabled = true;
+    if(lock) lock.innerText = `🔒 ${500 - total} contacts remaining`;
+  }
+}
 
 // ========================
 // AUTO LOAD ON START
