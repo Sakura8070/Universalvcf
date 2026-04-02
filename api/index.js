@@ -172,6 +172,14 @@ if (req.method === 'POST' && req.url === '/api/contact') {
       return res.send(vcf);
     }
 
+// ADMIN - GET CONTACTS
+if (req.url === '/api/admin/contacts') {
+  const user = auth(req);
+  if (!user) return res.status(403).json({ error: "Forbidden" });
+
+  const all = await contacts.find().toArray();
+  return res.json(all);
+}
     // =========================
     // DEFAULT
     // =========================
