@@ -36,19 +36,18 @@ async function save() {
     const data = await res.json();
     console.log("SAVE RESPONSE:", data);
 
-    if (res.ok) {
-      alert("✅ Contact saved !");
+    if(res.ok){
+  alert("✅ Contact saved !");
+  load();
+} else {
+  const err = await res.json();
 
-      // 🔥 reload dashboard SANS casser le save
-      try {
-        await load();
-      } catch (err) {
-        console.warn("Load failed (non critique):", err);
-      }
-
-    } else {
-      alert("❌ Error saving contact");
-    }
+  if(err.error === "Number already exists"){
+    alert("⚠️ This number already exists");
+  } else {
+    alert("❌ Error saving contact");
+  }
+}
 
   } catch (err) {
     console.error("SAVE ERROR:", err);
