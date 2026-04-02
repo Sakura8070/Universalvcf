@@ -72,29 +72,38 @@ module.exports = async (req, res) => {
     }
 
     // =========================
-    // SAVE CONTACT
-    // =========================
-    if (req.method === 'POST' && req.url.startsWith('/api/contact')) {
+    // Save contact (ANTI DOUBLON)
+if (req.method === 'POST' && req.url === '/api/contact') {
+  let body = '';
 
-      let body = '';
+  req.on('data', c => body += c);
 
-      if (typeof req.body === "object") {
-        body = req.body;
-      } else {
-        await new Promise(resolve => {
-          req.on('data', c => body += c);
-          req.on('end', resolve);
-        });
-        body = JSON.parse(body || "{}");
+  req.on('end', async () => {
+    try {
+      const data = JSON.parse(body);
+
+      // 🚫 CHECK DOUBLON
+      const exists = await contacts.findOne({ phone: data.phone });
+
+      if (exists) {
+        return res.status(400).json({ error: "Number already exists" });
       }
 
       await contacts.insertOne({
-        ...body,
+        ...data,
         createdAt: new Date()
       });
 
-      return res.json({ success: true });
+      res.json({ success: true });
+
+    } catch (err) {
+      console.error("SAVE ERROR:", err);
+      res.status(500).json({ error: "Server error" });
     }
+  });
+
+  return;
+}
 
     // =========================
     // STATS
