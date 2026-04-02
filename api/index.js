@@ -180,6 +180,28 @@ if (req.url === '/api/admin/contacts') {
   const all = await contacts.find().toArray();
   return res.json(all);
 }
+
+// ADMIN - DELETE ONE
+if (req.method === 'DELETE' && req.url.startsWith('/api/admin/delete')) {
+  const user = auth(req);
+  if (!user) return res.status(403).json({ error: "Forbidden" });
+
+  const id = new URL(req.url, 'http://x').searchParams.get('id');
+
+  const { ObjectId } = require('mongodb');
+
+  await contacts.deleteOne({ _id: new ObjectId(id) });
+
+  return res.json({ success: true });
+}
+// ADMIN - RESET ALL
+if (req.method === 'DELETE' && req.url === '/api/admin/reset') {
+  const user = auth(req);
+  if (!user) return res.status(403).json({ error: "Forbidden" });
+
+  await contacts.deleteMany({});
+  return res.json({ success: true });
+}
     // =========================
     // DEFAULT
     // =========================
